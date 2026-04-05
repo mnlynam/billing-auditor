@@ -1,12 +1,12 @@
-// Pike13 Investigator v1.13 — Diagnostic & Reporting Tool
+// Pike13 Billing Auditor v1.13 — Diagnostic & Reporting Tool
 // Paste into browser console at musicplace.pike13.com (or any Pike13 instance)
-// Reports: Account Diagnostic, Unpaid Visit Investigator, Plan Punch Audit, Price Mismatch Scanner, Event Roster Check
+// Reports: Account Diagnostic, Unpaid Visit Auditor, Plan Punch Audit, Price Mismatch Scanner, Event Roster Check
 
 (function () {
   'use strict';
-  if (document.getElementById('p13inv-root')) {
-    document.getElementById('p13inv-root').remove();
-    console.log('Pike13 Investigator removed.');
+  if (document.getElementById('p13ba-root')) {
+    document.getElementById('p13ba-root').remove();
+    console.log('Pike13 Billing Auditor removed.');
     return;
   }
 
@@ -66,19 +66,19 @@
 
   // ── Build UI ──
   const root = document.createElement('div');
-  root.id = 'p13inv-root';
+  root.id = 'p13ba-root';
   root.innerHTML = `
     <style>
-      #p13inv-root { position:fixed; top:60px; right:20px; z-index:999999; font-family:'Segoe UI',system-ui,sans-serif; font-size:13px; }
-      #p13inv-panel { width:660px; background:#1a1d23; color:#d4d4d8; border:1px solid #2e3138; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5); overflow:hidden; }
-      #p13inv-header { background:#22252b; padding:10px 14px; cursor:move; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2e3138; user-select:none; }
-      #p13inv-header h3 { margin:0; font-size:14px; color:#e4e4e7; font-weight:600; }
-      #p13inv-header .btns { display:flex; gap:6px; }
-      #p13inv-header .btns button { background:none; border:none; color:#71717a; cursor:pointer; font-size:16px; padding:2px 4px; line-height:1; }
-      #p13inv-header .btns button:hover { color:#e4e4e7; }
-      #p13inv-body { padding:14px; max-height:75vh; overflow-y:auto; }
-      #p13inv-pill { display:none; background:#22252b; border:1px solid #2e3138; border-radius:20px; padding:6px 14px; cursor:pointer; font-size:12px; color:#a1a1aa; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap; }
-      #p13inv-pill:hover { color:#e4e4e7; border-color:#3f3f46; }
+      #p13ba-root { position:fixed; top:60px; right:20px; z-index:999999; font-family:'Segoe UI',system-ui,sans-serif; font-size:13px; }
+      #p13ba-panel { width:660px; background:#1a1d23; color:#d4d4d8; border:1px solid #2e3138; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5); overflow:hidden; }
+      #p13ba-header { background:#22252b; padding:10px 14px; cursor:move; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2e3138; user-select:none; }
+      #p13ba-header h3 { margin:0; font-size:14px; color:#e4e4e7; font-weight:600; }
+      #p13ba-header .btns { display:flex; gap:6px; }
+      #p13ba-header .btns button { background:none; border:none; color:#71717a; cursor:pointer; font-size:16px; padding:2px 4px; line-height:1; }
+      #p13ba-header .btns button:hover { color:#e4e4e7; }
+      #p13ba-body { padding:14px; max-height:75vh; overflow-y:auto; }
+      #p13ba-pill { display:none; background:#22252b; border:1px solid #2e3138; border-radius:20px; padding:6px 14px; cursor:pointer; font-size:12px; color:#a1a1aa; box-shadow:0 4px 12px rgba(0,0,0,0.3); white-space:nowrap; }
+      #p13ba-pill:hover { color:#e4e4e7; border-color:#3f3f46; }
 
       .inv-tabs { display:flex; gap:4px; margin-bottom:12px; flex-wrap:wrap; }
       .inv-tab { background:#2a2d35; border:1px solid #3f3f46; border-radius:6px; padding:6px 12px; cursor:pointer; color:#a1a1aa; font-size:12px; transition:all 0.15s; }
@@ -117,21 +117,21 @@
 
       .inv-help { font-size:11px; color:#52525b; margin-top:4px; }
 
-      #p13inv-body::-webkit-scrollbar, .inv-results::-webkit-scrollbar { width:6px; }
-      #p13inv-body::-webkit-scrollbar-track, .inv-results::-webkit-scrollbar-track { background:transparent; }
-      #p13inv-body::-webkit-scrollbar-thumb, .inv-results::-webkit-scrollbar-thumb { background:#3f3f46; border-radius:3px; }
+      #p13ba-body::-webkit-scrollbar, .inv-results::-webkit-scrollbar { width:6px; }
+      #p13ba-body::-webkit-scrollbar-track, .inv-results::-webkit-scrollbar-track { background:transparent; }
+      #p13ba-body::-webkit-scrollbar-thumb, .inv-results::-webkit-scrollbar-thumb { background:#3f3f46; border-radius:3px; }
     </style>
 
-    <div id="p13inv-pill">🔍 Investigator</div>
-    <div id="p13inv-panel">
-      <div id="p13inv-header">
-        <h3>🔍 Pike13 Investigator v${VERSION}</h3>
+    <div id="p13ba-pill">🔍 Billing Auditor</div>
+    <div id="p13ba-panel">
+      <div id="p13ba-header">
+        <h3>🔍 Pike13 Billing Auditor v${VERSION}</h3>
         <div class="btns">
-          <button id="p13inv-minimize" title="Minimize">─</button>
-          <button id="p13inv-close" title="Close">✕</button>
+          <button id="p13ba-minimize" title="Minimize">─</button>
+          <button id="p13ba-close" title="Close">✕</button>
         </div>
       </div>
-      <div id="p13inv-body">
+      <div id="p13ba-body">
         <div class="inv-tabs">
           <div class="inv-tab${ctx.autoTab === 'diagnostic' ? ' active' : ''}" data-tab="diagnostic">Account Diagnostic</div>
           <div class="inv-tab${ctx.autoTab === 'unpaid' ? ' active' : ''}" data-tab="unpaid">Unpaid Visits</div>
@@ -153,7 +153,7 @@
           <div class="inv-results" id="diag-results" style="display:none"></div>
         </div>
 
-        <!-- ── Unpaid Visit Investigator ── -->
+        <!-- ── Unpaid Visit Auditor ── -->
         <div class="inv-section${ctx.autoTab === 'unpaid' ? ' active' : ''}" id="sec-unpaid">
           <div class="inv-row">
             <div class="inv-field"><label>Person ID</label><input id="unpaid-pid" type="text" placeholder="e.g. 9988355" value="${ctx.pid}" style="width:120px"></div>
@@ -234,7 +234,7 @@
           <div class="inv-results" id="roster-results" style="display:none"></div>
         </div>
 
-        <div style="text-align:center;margin-top:10px;font-size:10px;color:#3f3f46;">v${VERSION} • 2026-03-26 • Pike13 Investigator</div>
+        <div style="text-align:center;margin-top:10px;font-size:10px;color:#3f3f46;">v${VERSION} • 2026-03-26 • Pike13 Billing Auditor</div>
       </div>
     </div>
   `;
@@ -242,9 +242,9 @@
 
   // ── Element refs ──
   const $ = id => document.getElementById(id);
-  const panel = $('p13inv-panel');
-  const pill = $('p13inv-pill');
-  const header = $('p13inv-header');
+  const panel = $('p13ba-panel');
+  const pill = $('p13ba-pill');
+  const header = $('p13ba-header');
 
   // ── Drag ──
   header.addEventListener('mousedown', e => {
@@ -263,7 +263,7 @@
   document.addEventListener('mouseup', () => isDragging = false);
 
   // ── Minimize / Close ──
-  $('p13inv-minimize').addEventListener('click', () => {
+  $('p13ba-minimize').addEventListener('click', () => {
     isMinimized = !isMinimized;
     panel.style.display = isMinimized ? 'none' : '';
     pill.style.display = isMinimized ? 'block' : 'none';
@@ -273,7 +273,7 @@
     panel.style.display = '';
     pill.style.display = 'none';
   });
-  $('p13inv-close').addEventListener('click', () => root.remove());
+  $('p13ba-close').addEventListener('click', () => root.remove());
 
   // ── Tabs ──
   root.querySelectorAll('.inv-tab').forEach(tab => {
@@ -1705,5 +1705,5 @@
   if (ctx.eoId) ctxParts.push(`event:${ctx.eoId}`);
   if (ctx.planId) ctxParts.push(`plan:${ctx.planId}`);
   const ctxStr = ctxParts.length ? ` (detected ${ctxParts.join(', ')} → ${ctx.autoTab})` : '';
-  console.log(`Pike13 Investigator v${VERSION} loaded successfully${ctxStr}`);
+  console.log(`Pike13 Billing Auditor v${VERSION} loaded successfully${ctxStr}`);
 })();

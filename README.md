@@ -1,4 +1,4 @@
-# Pike13 Investigator v1.13
+# Pike13 Billing Auditor v1.13
 
 Diagnostic and reporting tool for Pike13 admin. Runs as a browser console script with a GUI overlay. Five reports for investigating unpaid visits, auditing plan punch allocation, scanning price mismatches, checking event roster coverage, and running full account diagnostics.
 
@@ -6,7 +6,7 @@ Diagnostic and reporting tool for Pike13 admin. Runs as a browser console script
 
 1. Navigate to any page on your Pike13 admin site (e.g., `musicplace.pike13.com`)
 2. Open browser DevTools (F12 or Ctrl+Shift+J)
-3. Paste the contents of `pike13-investigator-v1.13.js` into the console and press Enter
+3. Paste the contents of `billing-auditor.js` into the console and press Enter
 4. The panel appears in the top-right corner
 
 Run the script again to remove the panel. Reloading the page also removes it.
@@ -42,7 +42,7 @@ Quick health check for a single account. Enter a Person ID and click **Run Diagn
 
 **Slack Summary:** A copy-paste-ready sentence appears at the bottom describing any issues found — no payment method, expired card, autobill off, no active plan, or recent unpaid visits. If everything looks healthy, it says so explicitly.
 
-### 2. Unpaid Visit Investigator
+### 2. Unpaid Visit Auditor
 
 Automated version of the diagnostic workflow for tracking down why visits are unpaid. Enter a Person ID and date range.
 
@@ -71,7 +71,7 @@ Root cause analysis for plans with exhausted weekly/monthly slots. Enter a Perso
 - Shows week-by-week slot allocation: which visit fills each slot, with old-visit punches marked
 - Outputs the exact punch IDs to remove and a direct `/e/{occId}` link for each old visit's event occurrence
 
-**Use when:** The Unpaid Visit Investigator reports a plan with `remaining_count: 0` that should be covering visits. This is the tool that diagnosed the Meera Rao case — 8 old visits from 2024–2025 had been retroactively applied to a new plan, eating all the weekly slots.
+**Use when:** The Unpaid Visit Auditor reports a plan with `remaining_count: 0` that should be covering visits. This is the tool that diagnosed the Meera Rao case — 8 old visits from 2024–2025 had been retroactively applied to a new plan, eating all the weekly slots.
 
 **How the fix works:** There is no Remove button on the plan visits page (`/people/{id}/memberships/{plan_id}?aspect=visits`). To remove a punch, navigate to the event occurrence using the `/e/{occId}` links in the output, click the gear ⚙ icon next to the student, and choose **Reset attendance**. This removes the punch and frees the weekly slot. Repeat for each old visit listed.
 
@@ -121,7 +121,7 @@ Starts from an event occurrence (a specific class or lesson) and checks every en
 ## UI Features
 
 - **Drag to move** — Grab the header bar to reposition
-- **Minimize to pill** — Click the `─` button to collapse to a small "🔍 Investigator" pill; click the pill to restore
+- **Minimize to pill** — Click the `─` button to collapse to a small "🔍 Billing Auditor" pill; click the pill to restore
 - **Stop button** — Appears during long-running operations; aborts the current scan cleanly
 - **Copy** — Copies the current report output as plain text for pasting into Slack, notes, etc.
 - **Auto-detect Person ID** — If you're on any `/people/{id}` page, the ID fields pre-fill automatically across all tabs
@@ -134,15 +134,15 @@ Starts from an event occurrence (a specific class or lesson) and checks every en
 | Endpoint | Used By |
 |----------|---------|
 | `/api/v2/desk/people/search/autocomplete.json?q=` | All reports (person lookup, balance, guardian detection) |
-| `/api/v2/desk/people/find_by_ids.json?ids=` | Diagnostic, Unpaid Investigator (reliable guardian ID + email via `providers[]`) |
+| `/api/v2/desk/people/find_by_ids.json?ids=` | Diagnostic, Unpaid Auditor (reliable guardian ID + email via `providers[]`) |
 | `/api/v2/desk/people/{id}` | All reports (direct person lookup, dependents) |
-| `/api/v2/desk/people/{id}/form_of_payments` | Diagnostic, Unpaid Investigator |
+| `/api/v2/desk/people/{id}/form_of_payments` | Diagnostic, Unpaid Auditor |
 | `/api/v2/desk/people/{id}/plans` | All reports |
 | `/api/v2/desk/people/{id}/plans?filter=active` | All reports |
 | `/api/v2/desk/people/{id}/visits?from=&to=` | All reports except Price Mismatch |
 | `/api/v2/desk/people/{id}/visits/summary` | Diagnostic |
 | `/api/v2/desk/punches/{id}` | Plan Punch Audit, Event Roster Check |
-| `/api/v2/desk/plan_products?per_page=100` | Unpaid Investigator, Price Mismatch, Event Roster Check |
+| `/api/v2/desk/plan_products?per_page=100` | Unpaid Auditor, Price Mismatch, Event Roster Check |
 | `/api/v2/desk/people?per_page=100` | Price Mismatch (bulk mode) |
 | `/api/v2/desk/event_occurrences/{id}` | Event Roster Check |
 | `/e/{id}.json` | Event Roster Check (fallback) |
@@ -166,8 +166,8 @@ The script uses 120ms delays between sequential API calls. The Plan Punch Audit 
 
 ### v1.13 (2026-03-26)
 - **Solution-aware summaries throughout** — tools now distinguish between visit *states* and give targeted fix guidance rather than generic billing-reset language, motivated by diagnosing Anay Vasireddi's plan (unpaid visits were `registered` / attendance not taken on holidays, not a billing problem)
-- **Unpaid Visit Investigator — state annotations:** Visits in `registered` state are now flagged inline with `← attendance not taken` in the unpaid visits list
-- **Unpaid Visit Investigator — Slack summary:** Two new state-based blocks: one for `registered` visits (mark complete from the event roster to trigger auto-deduction, or no-show/late-cancel to clear without using a slot); one for `completed` visits with no punch (use "Deduct from plan" from the event roster). Both only surface when they add new information not already explained by a service mismatch or missing plan
+- **Unpaid Visit Auditor — state annotations:** Visits in `registered` state are now flagged inline with `← attendance not taken` in the unpaid visits list
+- **Unpaid Visit Auditor — Slack summary:** Two new state-based blocks: one for `registered` visits (mark complete from the event roster to trigger auto-deduction, or no-show/late-cancel to clear without using a slot); one for `completed` visits with no punch (use "Deduct from plan" from the event roster). Both only surface when they add new information not already explained by a service mismatch or missing plan
 - **Plan Punch Audit — Slack summary:** The "no old punches, remaining=0" branch now breaks down unpaid visits by state and gives a targeted fix for each combination (all registered, all completed-no-punch, or mixed), replacing the previous vague "billing may not be resetting" message
 - **Event Roster Check — Slack summary:** `UNPAID_WITH_PLAN` (has a covering plan with visits remaining, still unpaid) now has its own Slack paragraph explaining the `registered` state diagnosis and the complete-vs-no-show decision
 
@@ -177,7 +177,7 @@ The script uses 120ms delays between sequential API calls. The Plan Punch Audit 
 
 ### v1.11 (2026-03-26)
 - **Slack Summary added to Account Diagnostic** — compiles flags throughout the run (no payment method, expired card, autobill off, no active plans, recent unpaid visits) and produces a single-sentence plain-English summary at the end, ready to paste into Slack
-- **Slack Summary added to Unpaid Visit Investigator** — one paragraph per distinct problem found (service mismatch, exhausted plan slots, payment issues, no plans); issues stack when multiple causes are present; falls back to "no clear cause identified" if everything looks intact
+- **Slack Summary added to Unpaid Visit Auditor** — one paragraph per distinct problem found (service mismatch, exhausted plan slots, payment issues, no plans); issues stack when multiple causes are present; falls back to "no clear cause identified" if everything looks intact
 - **Slack Summary added to Plan Punch Audit** — four branches: no punches found; old pre-plan visits consuming slots (names dates, points at Reset attendance fix); plan at zero remaining with no old visits (names first unpaid date — further diagnosis needed); no issues found
 - **Bugfix:** `oldPunches` hoisted from `const` inside the `else` block to `let` before the `if/else`, so the Punch Audit Slack summary can reference it regardless of which branch ran
 
@@ -185,7 +185,7 @@ The script uses 120ms delays between sequential API calls. The Plan Punch Audit 
 - **Bugfix:** `getWeekStart()` now returns `null` for missing or invalid date strings instead of throwing `Invalid time value` — prevents crash in SLOT ALLOCATION section
 - **Bugfix:** Week slot map loop now derives `vDate` from `visit.event_occurrence?.start_at` directly; it was never stored on `planPunches` items, so destructuring always gave `undefined` (root cause of the crash)
 - **Plan Punch Audit — fix guidance corrected:** There is no Remove button on the plan visits page (confirmed via API ref v6.3). Output now explains the correct procedure — navigate to the event occurrence and use gear ⚙ → Reset attendance — and emits a direct `/e/{occId}` link for each old punch
-- **Guardian lookup via `find_by_ids`:** Added `fetchPersonWithProviders()` using `GET /api/v2/desk/people/find_by_ids.json?ids={pid}` to reliably obtain the guardian's person ID via `providers[]`. Used in the Unpaid Investigator (payment method check) and Account Diagnostic. Replaces name-based autocomplete search which could return wrong results. Falls back to name search if `find_by_ids` returns no provider
+- **Guardian lookup via `find_by_ids`:** Added `fetchPersonWithProviders()` using `GET /api/v2/desk/people/find_by_ids.json?ids={pid}` to reliably obtain the guardian's person ID via `providers[]`. Used in the Unpaid Auditor (payment method check) and Account Diagnostic. Replaces name-based autocomplete search which could return wrong results. Falls back to name search if `find_by_ids` returns no provider
 - **Account Diagnostic — dual guardian emails:** Now surfaces both `guardian_email` (stored on the dependent) and `providers[0].email` (from the provider's account record) when they differ, since these are independent fields per API ref v5.9/v6.1
 
 ### v1.09 (2026-03-24)
@@ -240,6 +240,6 @@ The script uses 120ms delays between sequential API calls. The Plan Punch Audit 
 
 ### v1.00 (2026-03-20)
 - Initial release
-- Four reports: Account Diagnostic, Unpaid Visit Investigator, Plan Punch Audit, Price Mismatch Scanner
+- Four reports: Account Diagnostic, Unpaid Visit Auditor, Plan Punch Audit, Price Mismatch Scanner
 - Draggable panel with minimize-to-pill, stop/abort, copy output
 - Auto-detects Person ID from URL
